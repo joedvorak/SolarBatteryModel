@@ -59,7 +59,6 @@ eventsSeasonal = cell(size(location,2),1);
 % Process results
 for li = 1:size(location,2)
     % Initialize Output tables for each location
-    Ein=cellfun(@(x) x*0.85,Ein1,'un',0);
     eventPerYear{li} = zeros(size(Eout,2),size(panel,2));
     events{li} = zeros(size(Eout,2),size(panel,2));
     eventPerYearSeasonal{li} = zeros(size(Eout,2),size(panel,2));
