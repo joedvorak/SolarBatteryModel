@@ -202,7 +202,7 @@ for li = 1:size(location,2)
     writematrix(tableheaderSeason,filename,'Sheet', location(li),'Range',["A"+tableSeasonStart]);
     writematrix(E,filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+1)]);
     writematrix(panel,filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+2)]);
-    writematrix(events{li},filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+3)]);
+    writematrix(eventsSeasonal{li},filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+3)]);
 end
 
 % The outputs will be in four tables. The tables are cell arrays with each
