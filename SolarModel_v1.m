@@ -18,7 +18,7 @@ clc;
 clear;
 close all;
 % Simulation Variables
-Eout= [0.25 0.5 0.75 1]; %System load in kW
+Eout= [0.75 1]; %System load in kW
 % The panel and battery sizes must be used together. The first battery size
 % will be used with the first panel size. The second with the second and so
 % on.
@@ -30,7 +30,19 @@ location = ["Cincinnati"];
 StartMonth = 11; % Seasonal: Ignore starting on the 1st day of this month
 EndMonth = 2; % Seasonal: Ignore stopping on the last day of this month
 minDOD = .2;
-invEff = 0.93; % Inverter Efficiency. 
+invEff = 0.93; % Inverter Efficiency. (From DC to AC)
+charConEff = 0.97; % Charge Controller Efficiency (From PV to DC)
+
+% Battery Efficiency
+battCharEff = 0.85; % Efficiency of adding charge to the battery
+% This model assumes constant charging and discharging rates for each hour.
+% If the power input from solar is greater than the power output to the
+% load, then the system is charging. This efficiency is used. The
+% efficiency only applies to the power difference as this is what goes to
+% the battery.
+% If the power input from solar is less than the power output to the
+% load, then the system is discharging. This value does not apply in
+% discharging.
 
 % Initialize Data Variables - These are cell variables
 timeStamp = cell(size(location,2),size(panel,2));
@@ -43,7 +55,6 @@ for pidx = 1:size(panel,2)
             importSAMfile(join([location(li), "_", panel(pidx), "kW"],"")); %Array of system production values in kW
     end
 end
-%[timeStamp(pidx,location),Ein(pidx,location)] = importSAMfile("Jackson_5kW"); %Array of system production values in kW
 
 Ebat = cell(size(location,2),size(panel,2),size(Eout,2));
 fail = cell(size(location,2),size(panel,2),size(Eout,2));
@@ -77,7 +88,13 @@ for li = 1:size(location,2)
 
             for i=1:(numel(Ein{li, pidx})-1)
                 % Normal
-                Ebat{li, pidx, Ei}(i+1)=(Ebat{li, pidx, Ei}(i)-Eout(Ei)/invEff)+Ein{li, pidx}(i);
+                if Ein{li, pidx}(i)*charConEff>Eout(Ei)/invEff
+                    % charging
+                    Ebat{li, pidx, Ei}(i+1)=Ebat{li, pidx, Ei}(i)+(Ein{li, pidx}(i)*charConEff-Eout(Ei)/invEff)*battCharEff;
+                else
+                    % discharging
+                    Ebat{li, pidx, Ei}(i+1)=Ebat{li, pidx, Ei}(i)+Ein{li, pidx}(i)*charConEff-Eout(Ei)/invEff;
+                end
 
                 if Ebat{li, pidx, Ei}(i+1)>E(pidx)
                     Ebat{li, pidx, Ei}(i+1)=E(pidx);
@@ -99,7 +116,13 @@ for li = 1:size(location,2)
                                 EbatSeasonal{li, pidx, Ei}(i)=E(pidx);
                             end
                         end
-                        EbatSeasonal{li, pidx, Ei}(i+1)=(EbatSeasonal{li, pidx, Ei}(i)-Eout(Ei)/invEff)+Ein{li, pidx}(i);
+                        if Ein{li, pidx}(i)*charConEff>Eout(Ei)/invEff
+                            % charging
+                            EbatSeasonal{li, pidx, Ei}(i+1)=EbatSeasonal{li, pidx, Ei}(i)+(Ein{li, pidx}(i)*charConEff-Eout(Ei)/invEff)*battCharEff;
+                        else
+                            % discharging
+                            EbatSeasonal{li, pidx, Ei}(i+1)=EbatSeasonal{li, pidx, Ei}(i)+Ein{li, pidx}(i)*charConEff-Eout(Ei)/invEff;
+                        end
 
                         if EbatSeasonal{li, pidx, Ei}(i+1)>E(pidx)
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
