@@ -46,6 +46,7 @@ EndMonth = 2; % Seasonal: Ignore stopping on the last day of this month
 minDOD = .2;
 invEff = 0.93; % Inverter Efficiency. (From DC to AC)
 charConEff = 0.97; % Charge Controller Efficiency (From PV to DC)
+DoDlimit = 0.2; % This is the minimum acceptable Depth of Discharge
 
 % Battery Efficiency
 battCharEff = 0.85; % Efficiency of adding charge to the battery
@@ -60,12 +61,12 @@ battCharEff = 0.85; % Efficiency of adding charge to the battery
 
 % Initialize Data Variables - These are cell variables
 timeStamp = cell(size(location,2),size(panel,2));
-Ein1 = cell(size(location,2),size(panel,2));
+Ein = cell(size(location,2),size(panel,2));
 
 %Import the SAM Data
 for pidx = 1:size(panel,2)
     for li = 1:size(location,2)
-        [timeStamp{li, pidx},Ein1{li, pidx}] = ...
+        [timeStamp{li, pidx},Ein{li, pidx}] = ...
             importSAMfile(join([location(li), "_", panel(pidx), "kW"],"")); %Array of system production values in kW
     end
 end
@@ -112,7 +113,7 @@ for li = 1:size(location,2)
                 if Ebat{li, pidx, Ei}(i+1)>E(pidx)
                     Ebat{li, pidx, Ei}(i+1)=E(pidx);
                 end 
-                if Ebat{li, pidx, Ei}(i+1)<=(E(pidx) * 0.2)
+                if Ebat{li, pidx, Ei}(i+1)<=(E(pidx) * DoDlimit)
                     fail{li, pidx, Ei}(i+1)=1;
                     Ebat{li, pidx, Ei}(i+1)=E(pidx);
                 end
@@ -140,7 +141,7 @@ for li = 1:size(location,2)
                         if EbatSeasonal{li, pidx, Ei}(i+1)>E(pidx)
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
                         end 
-                        if EbatSeasonal{li, pidx, Ei}(i+1)<=(E(pidx) * 0.2)
+                        if EbatSeasonal{li, pidx, Ei}(i+1)<=(E(pidx) * DoDlimit)
                             failSeasonal{li, pidx, Ei}(i+1)=1;
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
                         end
@@ -164,7 +165,7 @@ for li = 1:size(location,2)
                         if EbatSeasonal{li, pidx, Ei}(i+1)>E(pidx)
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
                         end 
-                        if EbatSeasonal{li, pidx, Ei}(i+1)<=(E(pidx) * 0.2)
+                        if EbatSeasonal{li, pidx, Ei}(i+1)<=(E(pidx) * DoDlimit)
                             failSeasonal{li, pidx, Ei}(i+1)=1;
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
                         end
@@ -182,6 +183,26 @@ for li = 1:size(location,2)
             eventsSeasonal{li}(Ei, pidx) = sum(failSeasonal{li, pidx, Ei});
         end
     end
+end
+
+tableheaderYear = ["Insufficient Energy Events All Year", "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
+tableheaderSeason = [["Insufficient Energy Events Seasonal: Month "+StartMonth+" to "+EndMonth], "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
+
+tableSeasonStart = size(tableheaderYear,1)+2;
+
+
+for li = 1:size(location,2)
+    filename = 'failureTables.xlsx';
+    % All year data
+    writematrix(tableheaderYear,filename,'Sheet', location(li),'Range','A1');
+    writematrix(E,filename,'Sheet', location(li),'Range','B2');
+    writematrix(panel,filename,'Sheet', location(li),'Range','B3');
+    writematrix(events{li},filename,'Sheet', location(li),'Range','B4');
+    
+    writematrix(tableheaderSeason,filename,'Sheet', location(li),'Range',["A"+tableSeasonStart]);
+    writematrix(E,filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+1)]);
+    writematrix(panel,filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+2)]);
+    writematrix(events{li},filename,'Sheet', location(li),'Range',["B"+(tableSeasonStart+3)]);
 end
 
 % The outputs will be in four tables. The tables are cell arrays with each
