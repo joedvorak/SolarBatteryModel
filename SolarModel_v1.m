@@ -22,12 +22,15 @@ Eout= [0.25 0.5 0.75 1]; %System load in kW
 % The panel and battery sizes must be used together. The first battery size
 % will be used with the first panel size. The second with the second and so
 % on.
-E= [5, 10, 15, 20, 30, 40, 50, 60]; %Initial Battery Storage estimate in kWh
-panel = [20, 20, 20, 20, 20, 20, 20, 20]; % Panel Sizes
+E= [40];
+%E= [5, 10, 15, 20, 30, 40, 50, 60]; %Initial Battery Storage estimate in kWh
+panel = [20];
+%panel = [20, 20, 20, 20, 20, 20, 20, 20]; % Panel Sizes
 location = ["Cincinnati"];
 StartMonth = 11; % Seasonal: Ignore starting on the 1st day of this month
 EndMonth = 2; % Seasonal: Ignore stopping on the last day of this month
 minDOD = .2;
+invEff = 0.93; % Inverter Efficiency. 
 
 % Initialize Data Variables - These are cell variables
 timeStamp = cell(size(location,2),size(panel,2));
@@ -74,7 +77,7 @@ for li = 1:size(location,2)
 
             for i=1:(numel(Ein{li, pidx})-1)
                 % Normal
-                Ebat{li, pidx, Ei}(i+1)=(Ebat{li, pidx, Ei}(i)-Eout(Ei))+Ein{li, pidx}(i);
+                Ebat{li, pidx, Ei}(i+1)=(Ebat{li, pidx, Ei}(i)-Eout(Ei)/invEff)+Ein{li, pidx}(i);
 
                 if Ebat{li, pidx, Ei}(i+1)>E(pidx)
                     Ebat{li, pidx, Ei}(i+1)=E(pidx);
@@ -96,7 +99,7 @@ for li = 1:size(location,2)
                                 EbatSeasonal{li, pidx, Ei}(i)=E(pidx);
                             end
                         end
-                        EbatSeasonal{li, pidx, Ei}(i+1)=(EbatSeasonal{li, pidx, Ei}(i)-Eout(Ei))+Ein{li, pidx}(i);
+                        EbatSeasonal{li, pidx, Ei}(i+1)=(EbatSeasonal{li, pidx, Ei}(i)-Eout(Ei)/invEff)+Ein{li, pidx}(i);
 
                         if EbatSeasonal{li, pidx, Ei}(i+1)>E(pidx)
                             EbatSeasonal{li, pidx, Ei}(i+1)=E(pidx);
