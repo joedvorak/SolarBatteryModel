@@ -215,8 +215,8 @@ for li = 1:size(location,2)
     end
 end
 
-tableheaderYear = ["Generator Operating Hours All Year", "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
-tableheaderSeason = [["Generator Operating Hours Seasonal: Month "+StartMonth+" to "+EndMonth], "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
+tableheaderYear = ["Generator Operating Hours over 21 Years (All Year)", "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
+tableheaderSeason = [["Generator Operating Hours over 21 Years (Seasonal: Month "+StartMonth+" to "+EndMonth+")"], "Batt Size (kWh) [E]", "panel size (kw)", Eout+" kW Load"]';
 
 tableSeasonStart = size(tableheaderYear,1)+2;
 
