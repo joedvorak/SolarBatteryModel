@@ -21,12 +21,12 @@ clc;
 clear;
 close all;
 % Simulation Variables
-% Eout= [0.25]; %System load in kW
+% Eout= [0.75]; %System load in kW
 Eout= [0.25 0.5 0.75 1]; %System load in kW
 % The panel and battery sizes must be used together. The first battery size
 % will be used with the first panel size. The second with the second and so
 % on.
-% E= [20];
+% E= [5, 10, 15, 20];
 E= [5, 10, 15, 20, 30, 40, 50, 60 ...
     5, 10, 15, 20, 30, 40, 50, 60 ...
     5, 10, 15, 20, 30, 40, 50, 60 ...
@@ -35,7 +35,7 @@ E= [5, 10, 15, 20, 30, 40, 50, 60 ...
     5, 10, 15, 20, 30, 40, 50, 60 ...
     5, 10, 15, 20, 30, 40, 50, 60 ...
     ]; %Initial Battery Storage estimate in kWh
-% panel = [5];
+% panel = [2, 2, 2, 2];
 panel = [2, 2, 2, 2, 2, 2, 2, 2 ...
     3, 3, 3, 3, 3, 3, 3, 3 ...
     4, 4, 4, 4, 4, 4, 4, 4 ...
@@ -108,6 +108,9 @@ for li = 1:size(location,2)
             genRunSeasonal{li, pidx, Ei}=zeros(1,numel(Ein{li, pidx}));
             runningSeason{li, pidx, Ei}=true(1,numel(Ein{li, pidx}));
             EbatSeasonal{li, pidx, Ei}(1)=E(pidx); %This sets the initial battery value as being fully charged
+            
+            genOn = false; % Ensure Generator starts off.
+            genOnSeason = false; % Ensure Generator starts off.
 
             for i=1:(numel(Ein{li, pidx})-1)
                 % Normal
@@ -128,7 +131,7 @@ for li = 1:size(location,2)
                 end
                 if genOn == true
                     genRun{li, pidx, Ei}(i+1)=true; % Record that the generator is on
-                    if Ebat{li, pidx, Ei}(i+1)>= genShutOffLevel % We have reached shutoff level
+                    if Ebat{li, pidx, Ei}(i+1)>= genShutOffLevel*E(pidx) % We have reached shutoff level
                         genOn = false; % Stop Generator
                     end
                 end
@@ -161,7 +164,7 @@ for li = 1:size(location,2)
                         end
                     if genOnSeason == true
                         genRunSeasonal{li, pidx, Ei}(i+1)=true; % Record that the generator is on
-                        if EbatSeasonal{li, pidx, Ei}(i+1)>= genShutOffLevel % We have reached shutoff level
+                        if EbatSeasonal{li, pidx, Ei}(i+1)>= genShutOffLevel*E(pidx) % We have reached shutoff level
                             genOnSeason = false; % Stop Generator
                         end
                     end
@@ -195,7 +198,7 @@ for li = 1:size(location,2)
                         end
                     if genOnSeason == true
                         genRunSeasonal{li, pidx, Ei}(i+1)=true; % Record that the generator is on
-                        if EbatSeasonal{li, pidx, Ei}(i+1)>= genShutOffLevel % We have reached shutoff level
+                        if EbatSeasonal{li, pidx, Ei}(i+1)>= genShutOffLevel*E(pidx) % We have reached shutoff level
                             genOnSeason = false; % Stop Generator
                         end
                     end
@@ -224,7 +227,7 @@ tableSeasonStart = size(tableheaderYear,1)+2;
 for li = 1:size(location,2)
     filename = 'GenTables.xlsx';
     % All year data
-    writematrix(tableheaderYear,filename,'Sheet', location(li),'Range','A1');
+    writematrix(tableheaderYear,filename,'Sheet', location(li),'Range','A1','WriteMode','overwritesheet'); % Erases the worksheet first
     writematrix(E,filename,'Sheet', location(li),'Range','B2');
     writematrix(panel,filename,'Sheet', location(li),'Range','B3');
     writematrix(genHours{li},filename,'Sheet', location(li),'Range','B4');
